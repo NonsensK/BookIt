@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,6 +24,14 @@ public class SearchRoutesServlet extends HttpServlet {
         String arrivalCity = request.getParameter("arrivalCity");
         String date = request.getParameter("date");
 
+        // Проверка корректности входных данных
+        if (departureCity == null || arrivalCity == null || date == null ||
+                departureCity.isEmpty() || arrivalCity.isEmpty() || date.isEmpty()) {
+            request.setAttribute("error", "Все поля должны быть заполнены.");
+            request.getRequestDispatcher("/index.jsp").forward(request, response);
+            return;
+        }
+
         try {
             // Конвертация строки даты
             LocalDate travelDate = LocalDate.parse(date);
@@ -30,12 +39,25 @@ public class SearchRoutesServlet extends HttpServlet {
             // Получение маршрутов
             List<Route> routes = routeDAO.getRoutesByCriteria(departureCity, arrivalCity, travelDate);
 
+            // Проверка на пустой результат
+            if (routes.isEmpty()) {
+                request.setAttribute("message", "Маршруты не найдены.");
+            } else {
+                request.setAttribute("routes", routes);
+            }
+
             // Передача данных на JSP
-            request.setAttribute("routes", routes);
             request.getRequestDispatcher("/results.jsp").forward(request, response);
-        } catch (Exception e) {
+        } catch (SQLException e) {
+            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("Произошла ошибка при поиске маршрутов.");
+            request.setAttribute("error", "Ошибка базы данных. Пожалуйста, повторите попытку позже.");
+            request.getRequestDispatcher("/index.jsp").forward(request, response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            request.setAttribute("error", "Некорректный формат даты.");
+            request.getRequestDispatcher("/index.jsp").forward(request, response);
         }
     }
 }

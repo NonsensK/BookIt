@@ -1,23 +1,23 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Поиск билетов</title>
+    <title>Search Routes</title>
 </head>
 <body>
-<h1>Поиск билетов</h1>
-<form action="search" method="post">
-    <label for="departure">Город отправления:</label>
-    <input type="text" id="departure" name="departure"><br>
+<h1>Поиск маршрутов</h1>
+<form action="searchRoutes" method="post">
+    <label for="departureCity">Город отправления:</label>
+    <input type="text" id="departureCity" name="departureCity" required><br>
 
-    <label for="arrival">Город прибытия:</label>
-    <input type="text" id="arrival" name="arrival"><br>
+    <label for="arrivalCity">Город прибытия:</label>
+    <input type="text" id="arrivalCity" name="arrivalCity" required><br>
 
     <label for="date">Дата поездки:</label>
-    <input type="date" id="date" name="date"><br>
+    <input type="date" id="date" name="date" required><br>
 
-    <button type="submit">Найти билеты</button>
+    <button type="submit">Найти маршруты</button>
 </form>
 </body>
 </html>
