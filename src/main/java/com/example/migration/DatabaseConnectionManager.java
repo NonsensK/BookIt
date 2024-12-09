@@ -1,4 +1,3 @@
-//database connection manager
 package com.example.migration;
 
 import java.sql.Connection;
@@ -19,7 +18,7 @@ public class DatabaseConnectionManager {
     // Метод для получения подключения
     public static Connection getConnection() throws SQLException {
         try {
-            // Регистрация драйвера не требуется в современных версиях, но можно оставить для совместимости.
+            // Регистрация драйвера (можно не указывать в современных версиях MySQL).
             Class.forName("com.mysql.cj.jdbc.Driver");
             return DriverManager.getConnection(DATABASE_URL, DATABASE_USER, DATABASE_PASSWORD);
         } catch (ClassNotFoundException e) {
@@ -39,6 +38,19 @@ public class DatabaseConnectionManager {
             } catch (SQLException e) {
                 LOGGER.log(Level.WARNING, "Ошибка при закрытии подключения", e);
             }
+        }
+    }
+    // Метод для тестирования подключения
+    public static void testConnection() {
+        try (Connection connection = getConnection()) {
+            if (connection != null && !connection.isClosed()) {
+                System.out.println("Успешное подключение к базе данных.");
+            } else {
+                System.out.println("Не удалось подключиться к базе данных.");
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Ошибка подключения к базе данных", e);
+            e.printStackTrace();
         }
     }
 }
