@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 @WebServlet("/search")
@@ -25,11 +26,20 @@ public class SearchServlet extends HttpServlet {
         String date = request.getParameter("date");
 
         try {
+            // Конвертация строки даты в LocalDate
+            LocalDate travelDate = LocalDate.parse(date);
+
             // Поиск маршрутов
-            List<Route> routes = routeDAO.searchRoutes(departureCity, arrivalCity, date);
+            List<Route> routes = routeDAO.getRoutesByCriteria(departureCity, arrivalCity, travelDate);
+
+            // Проверка на наличие маршрутов
+            if (routes.isEmpty()) {
+                request.setAttribute("message", "Маршруты не найдены.");
+            } else {
+                request.setAttribute("routes", routes);
+            }
 
             // Передача данных на JSP
-            request.setAttribute("routes", routes);
             request.getRequestDispatcher("/results.jsp").forward(request, response);
 
         } catch (Exception e) {

@@ -1,3 +1,4 @@
+//database connection manager
 package com.example.migration;
 
 import java.sql.Connection;
