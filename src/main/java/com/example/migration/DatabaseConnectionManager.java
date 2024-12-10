@@ -11,9 +11,10 @@ public class DatabaseConnectionManager {
     private static final Logger LOGGER = Logger.getLogger(DatabaseConnectionManager.class.getName());
 
     // URL подключения с параметрами
-    private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/bookit?useUnicode=true&characterEncoding=UTF-8";
+    private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/bookit?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC";
+
     private static final String DATABASE_USER = "bookit_user";
-    private static final String DATABASE_PASSWORD = "your_password"; // Укажите правильный пароль для пользователя bookit_user
+    private static final String DATABASE_PASSWORD = "bookit_password"; // Укажите правильный пароль для пользователя bookit_user
 
     // Метод для получения подключения
     public static Connection getConnection() throws SQLException {
