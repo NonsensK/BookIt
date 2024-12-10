@@ -9,12 +9,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SearchRoutesServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(SearchRoutesServlet.class.getName());
     private final RouteDAO routeDAO = new RouteDAO();
 
     @Override
@@ -25,10 +27,10 @@ public class SearchRoutesServlet extends HttpServlet {
         String date = request.getParameter("date");
 
         // Лог для входных данных
-        System.out.println("Полученные данные из формы:");
-        System.out.println("departureCity: " + departureCity);
-        System.out.println("arrivalCity: " + arrivalCity);
-        System.out.println("date: " + date);
+        LOGGER.info("Полученные данные из формы:");
+        LOGGER.info("departureCity: " + departureCity);
+        LOGGER.info("arrivalCity: " + arrivalCity);
+        LOGGER.info("date: " + date);
 
         // Проверка корректности входных данных
         if (departureCity == null || arrivalCity == null || date == null ||
@@ -43,53 +45,42 @@ public class SearchRoutesServlet extends HttpServlet {
             LocalDate travelDate = LocalDate.parse(date);
 
             // Лог перед вызовом метода DAO
-            System.out.println("Перед вызовом getRoutesByCriteria:");
-            System.out.println("departureCity: " + departureCity);
-            System.out.println("arrivalCity: " + arrivalCity);
-            System.out.println("travelDate: " + travelDate);
+            LOGGER.info("Перед вызовом getRoutesByCriteria:");
+            LOGGER.info("departureCity: " + departureCity);
+            LOGGER.info("arrivalCity: " + arrivalCity);
+            LOGGER.info("travelDate: " + travelDate);
 
             // Получение маршрутов
             List<Route> routes = routeDAO.getRoutesByCriteria(departureCity, arrivalCity, travelDate);
 
             // Лог результата DAO
-            System.out.println("Результат выполнения getRoutesByCriteria:");
             if (routes.isEmpty()) {
-                System.out.println("Маршруты не найдены.");
-            } else {
-                for (Route route : routes) {
-                    System.out.println(route);
-                }
-            }
-
-            // Проверка на пустой результат
-            if (routes.isEmpty()) {
+                LOGGER.info("Маршруты не найдены.");
                 request.setAttribute("message", "Маршруты не найдены.");
             } else {
+                for (Route route : routes) {
+                    LOGGER.info(route.toString());
+                }
                 request.setAttribute("routes", routes);
             }
 
             // Передача данных на JSP
-            System.out.println("Маршруты переданы на JSP:");
-            for (Route route : routes) {
-                System.out.println(route);
-            }
             request.getRequestDispatcher("/results.jsp").forward(request, response);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            request.setAttribute("error", "Ошибка базы данных. Пожалуйста, повторите попытку позже.");
-            request.getRequestDispatcher("/index.jsp").forward(request, response);
         } catch (Exception e) {
-            e.printStackTrace();
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            request.setAttribute("error", "Некорректный формат даты.");
-            request.getRequestDispatcher("/index.jsp").forward(request, response);
+            logErrorAndRespond(request, response, "Ошибка обработки данных. Проверьте введенные данные.", HttpServletResponse.SC_BAD_REQUEST, e);
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Перенаправляем запросы GET на главную страницу
+        request.getRequestDispatcher("/index.jsp").forward(request, response);
+    }
+
+    private void logErrorAndRespond(HttpServletRequest request, HttpServletResponse response, String errorMessage, int statusCode, Exception e) throws ServletException, IOException {
+        LOGGER.log(Level.SEVERE, errorMessage, e);
+        response.setStatus(statusCode);
+        request.setAttribute("error", errorMessage);
         request.getRequestDispatcher("/index.jsp").forward(request, response);
     }
 }

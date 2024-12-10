@@ -8,6 +8,7 @@ public class Ticket {
     private String userEmail;
     private int routeId;
     private LocalDateTime purchaseDate;
+    private int availableQuantity; // Добавлено поле для количества доступных билетов
 
     // Getters and Setters
     public int getId() {
@@ -48,5 +49,13 @@ public class Ticket {
 
     public void setPurchaseDate(LocalDateTime purchaseDate) {
         this.purchaseDate = purchaseDate;
+    }
+
+    public int getAvailableQuantity() {
+        return availableQuantity;
+    }
+
+    public void setAvailableQuantity(int availableQuantity) {
+        this.availableQuantity = availableQuantity;
     }
 }

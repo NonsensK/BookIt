@@ -38,6 +38,8 @@
         <url-pattern>/purchase</url-pattern>
     </servlet-mapping>
 
+
+
     <!-- Указание welcome-файла -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>

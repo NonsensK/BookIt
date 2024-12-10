@@ -12,7 +12,7 @@ public class TicketDAO {
 
     // Метод для добавления нового билета
     public void addTicket(Ticket ticket) throws SQLException {
-        String query = "INSERT INTO tickets (user_name, user_email, route_id, purchase_date) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO tickets (user_name, user_email, route_id, purchase_date, available_quantity) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
@@ -21,6 +21,7 @@ public class TicketDAO {
             preparedStatement.setString(2, ticket.getUserEmail());
             preparedStatement.setInt(3, ticket.getRouteId());
             preparedStatement.setTimestamp(4, Timestamp.valueOf(ticket.getPurchaseDate()));
+            preparedStatement.setInt(5, ticket.getAvailableQuantity());
             preparedStatement.executeUpdate();
         }
     }
@@ -62,6 +63,19 @@ public class TicketDAO {
         return tickets;
     }
 
+    // Метод для обновления доступного количества билетов
+    public void updateAvailableQuantity(int ticketId, int newQuantity) throws SQLException {
+        String query = "UPDATE tickets SET available_quantity = ? WHERE id = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, newQuantity);
+            preparedStatement.setInt(2, ticketId);
+            preparedStatement.executeUpdate();
+        }
+    }
+
     // Вспомогательный метод для преобразования ResultSet в объект Ticket
     private Ticket mapResultSetToTicket(ResultSet resultSet) throws SQLException {
         Ticket ticket = new Ticket();
@@ -70,6 +84,7 @@ public class TicketDAO {
         ticket.setUserEmail(resultSet.getString("user_email"));
         ticket.setRouteId(resultSet.getInt("route_id"));
         ticket.setPurchaseDate(resultSet.getTimestamp("purchase_date").toLocalDateTime());
+        ticket.setAvailableQuantity(resultSet.getInt("available_quantity"));
         return ticket;
     }
 }

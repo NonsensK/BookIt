@@ -9,29 +9,32 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.Random;
 
 public class PurchaseTicketServlet extends HttpServlet {
 
     private final TicketDAO ticketDAO = new TicketDAO();
-    private final Random random = new Random();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Получаем данные из формы
         String userName = request.getParameter("userName");
         String userEmail = request.getParameter("userEmail");
         String routeIdStr = request.getParameter("routeId");
 
+        // Логируем входные данные
+        System.out.println("Данные из формы: " + userName + ", " + userEmail + ", " + routeIdStr);
+
+        if (userName == null || userEmail == null || routeIdStr == null ||
+                userName.isEmpty() || userEmail.isEmpty() || routeIdStr.isEmpty()) {
+            request.setAttribute("error", "Все поля должны быть заполнены.");
+            request.getRequestDispatcher("/purchase.jsp").forward(request, response);
+            return;
+        }
+
         try {
             int routeId = Integer.parseInt(routeIdStr);
-
-            // Случайная ошибка оплаты (1 из 10)
-            if (random.nextInt(10) == 0) {
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                response.getWriter().write("К сожалению, произошла ошибка при обработке оплаты. Попробуйте снова.");
-                return;
-            }
 
             // Создаем билет
             Ticket ticket = new Ticket();
@@ -40,14 +43,20 @@ public class PurchaseTicketServlet extends HttpServlet {
             ticket.setRouteId(routeId);
             ticket.setPurchaseDate(LocalDateTime.now());
 
-            // Сохраняем билет в базе
+            // Сохраняем билет в базе данных
             ticketDAO.addTicket(ticket);
 
-            // Успех
-            response.getWriter().write("Спасибо за покупку! Детали отправлены на ваш email.");
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("Произошла ошибка при обработке вашего запроса.");
+            // Сообщаем об успешной покупке
+            request.setAttribute("message", "Билет успешно куплен!");
+            request.getRequestDispatcher("/success.jsp").forward(request, response);
+
+        } catch (NumberFormatException e) {
+            request.setAttribute("error", "Некорректный ID маршрута.");
+            request.getRequestDispatcher("/purchase.jsp").forward(request, response);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Ошибка базы данных. Попробуйте позже.");
+            request.getRequestDispatcher("/purchase.jsp").forward(request, response);
         }
     }
 }

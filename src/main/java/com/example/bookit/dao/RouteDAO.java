@@ -1,4 +1,3 @@
-//RouteDAO
 package com.example.bookit.dao;
 
 import com.example.bookit.model.Route;
@@ -6,14 +5,13 @@ import com.example.migration.DatabaseConnectionManager;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RouteDAO {
 
     // Метод для получения всех маршрутов
-    public List<Route> getAllRoutes() throws SQLException {
+    public List<Route> getAllRoutes() {
         List<Route> routes = new ArrayList<>();
         String query = "SELECT * FROM routes";
 
@@ -22,59 +20,48 @@ public class RouteDAO {
              ResultSet resultSet = preparedStatement.executeQuery()) {
 
             while (resultSet.next()) {
-                Route route = mapResultSetToRoute(resultSet);
-                routes.add(route);
+                routes.add(mapResultSetToRoute(resultSet));
             }
+
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении всех маршрутов: " + e.getMessage());
+            e.printStackTrace();
         }
         return routes;
     }
 
     // Метод для получения маршрутов по критериям
-    public List<Route> getRoutesByCriteria(String departureCity, String arrivalCity, LocalDate travelDate) throws SQLException {
+    public List<Route> getRoutesByCriteria(String departureCity, String arrivalCity, LocalDate travelDate) {
         List<Route> routes = new ArrayList<>();
         String query = "SELECT * FROM routes WHERE departure_city = ? AND arrival_city = ? AND DATE(departure_time) = ?";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            System.out.println("Executing query: " + query);
-            System.out.println("Parameters:");
-            System.out.println("departureCity: " + departureCity);
-            System.out.println("arrivalCity: " + arrivalCity);
-            System.out.println("travelDate: " + travelDate);
-
             preparedStatement.setString(1, departureCity);
             preparedStatement.setString(2, arrivalCity);
             preparedStatement.setDate(3, Date.valueOf(travelDate));
 
+            System.out.println("Выполнение запроса: " + query);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    Route route = mapResultSetToRoute(resultSet);
-                    routes.add(route);
+                    routes.add(mapResultSetToRoute(resultSet));
                 }
             }
-        }
 
-        System.out.println("Маршруты из getRoutesByCriteria:");
-        for (Route route : routes) {
-            System.out.println(route);
+        } catch (SQLException e) {
+            System.err.println("Ошибка при выполнении getRoutesByCriteria: " + e.getMessage());
+            e.printStackTrace();
         }
         return routes;
     }
 
     // Метод для добавления нового маршрута
-    public void addRoute(Route route) throws SQLException {
+    public void addRoute(Route route) {
         String query = "INSERT INTO routes (departure_city, arrival_city, departure_time, arrival_time, price) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            System.out.println("Добавляем маршрут:");
-            System.out.println("Город отправления: " + route.getDepartureCity());
-            System.out.println("Город прибытия: " + route.getArrivalCity());
-            System.out.println("Время отправления: " + route.getDepartureTime());
-            System.out.println("Время прибытия: " + route.getArrivalTime());
-            System.out.println("Цена: " + route.getPrice());
 
             preparedStatement.setString(1, route.getDepartureCity());
             preparedStatement.setString(2, route.getArrivalCity());
@@ -85,10 +72,14 @@ public class RouteDAO {
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
-                System.out.println("Маршрут успешно добавлен.");
+                System.out.println("Маршрут успешно добавлен: " + route);
             } else {
                 System.out.println("Не удалось добавить маршрут.");
             }
+
+        } catch (SQLException e) {
+            System.err.println("Ошибка при добавлении маршрута: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
