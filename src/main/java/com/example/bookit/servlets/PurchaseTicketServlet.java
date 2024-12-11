@@ -9,11 +9,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PurchaseTicketServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(PurchaseTicketServlet.class.getName());
     private final TicketDAO ticketDAO = new TicketDAO();
 
     @Override
@@ -21,42 +22,51 @@ public class PurchaseTicketServlet extends HttpServlet {
         // Получаем данные из формы
         String userName = request.getParameter("userName");
         String userEmail = request.getParameter("userEmail");
-        String routeIdStr = request.getParameter("routeId");
+        int routeId = Integer.parseInt(request.getParameter("routeId"));
 
         // Логируем входные данные
-        System.out.println("Данные из формы: " + userName + ", " + userEmail + ", " + routeIdStr);
+        LOGGER.info("Полученные данные из формы:");
+        LOGGER.info("userName: " + userName);
+        LOGGER.info("userEmail: " + userEmail);
+        LOGGER.info("routeId: " + routeId);
 
-        if (userName == null || userEmail == null || routeIdStr == null ||
-                userName.isEmpty() || userEmail.isEmpty() || routeIdStr.isEmpty()) {
-            request.setAttribute("error", "Все поля должны быть заполнены.");
-            request.getRequestDispatcher("/purchase.jsp").forward(request, response);
-            return;
-        }
+        // Количество купленных билетов (в данном случае 1)
+        int purchasedTickets = 1;
 
+        // Проверка доступности билетов
         try {
-            int routeId = Integer.parseInt(routeIdStr);
+            if (ticketDAO.areTicketsAvailable(routeId, purchasedTickets)) {
+                // Создаем новый билет
+                Ticket ticket = new Ticket();
+                ticket.setUserName(userName);
+                ticket.setUserEmail(userEmail);
+                ticket.setRouteId(routeId);
 
-            // Создаем билет
-            Ticket ticket = new Ticket();
-            ticket.setUserName(userName);
-            ticket.setUserEmail(userEmail);
-            ticket.setRouteId(routeId);
-            ticket.setPurchaseDate(LocalDateTime.now());
+                // Сохраняем билет в базе данных
+                ticketDAO.addTicket(ticket);
 
-            // Сохраняем билет в базе данных
-            ticketDAO.addTicket(ticket);
+                // Обновляем количество доступных билетов
+                ticketDAO.updateAvailableQuantity(routeId, purchasedTickets);
 
-            // Сообщаем об успешной покупке
-            request.setAttribute("message", "Билет успешно куплен!");
-            request.getRequestDispatcher("/success.jsp").forward(request, response);
+                // Сообщаем об успешной покупке
+                request.setAttribute("message", "Билет успешно куплен!");
+            } else {
+                // Если билетов нет в наличии
+                request.setAttribute("error", "Нет доступных билетов на выбранный маршрут.");
+            }
 
-        } catch (NumberFormatException e) {
-            request.setAttribute("error", "Некорректный ID маршрута.");
-            request.getRequestDispatcher("/purchase.jsp").forward(request, response);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            request.setAttribute("error", "Ошибка базы данных. Попробуйте позже.");
-            request.getRequestDispatcher("/purchase.jsp").forward(request, response);
+            // Перенаправляем на страницу с результатами
+            request.getRequestDispatcher("/purchaseResult.jsp").forward(request, response);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Ошибка при покупке билета", e);
+            request.setAttribute("error", "Ошибка при покупке билета.");
+            request.getRequestDispatcher("/purchaseResult.jsp").forward(request, response);
         }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Перенаправляем GET запросы на главную страницу
+        request.getRequestDispatcher("/index.jsp").forward(request, response);
     }
 }

@@ -4,7 +4,6 @@ import com.example.bookit.model.Ticket;
 import com.example.migration.DatabaseConnectionManager;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,16 +62,35 @@ public class TicketDAO {
         return tickets;
     }
 
-    // Метод для обновления доступного количества билетов
-    public void updateAvailableQuantity(int ticketId, int newQuantity) throws SQLException {
-        String query = "UPDATE tickets SET available_quantity = ? WHERE id = ?";
-
+    // Метод для проверки доступности билетов
+    public boolean areTicketsAvailable(int routeId, int requestedTickets) throws SQLException {
+        String query = "SELECT available_tickets FROM routes WHERE id = ?";
         try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            preparedStatement.setInt(1, newQuantity);
-            preparedStatement.setInt(2, ticketId);
-            preparedStatement.executeUpdate();
+            preparedStatement.setInt(1, routeId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    int availableTickets = resultSet.getInt("available_tickets");
+                    return availableTickets >= requestedTickets;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Метод для уменьшения доступного количества билетов
+    public boolean updateAvailableQuantity(int routeId, int purchasedTickets) throws SQLException {
+        String query = "UPDATE routes SET available_tickets = available_tickets - ? WHERE id = ?";
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setInt(1, purchasedTickets); // количество купленных билетов
+            preparedStatement.setInt(2, routeId); // ID маршрута
+
+            int rowsUpdated = preparedStatement.executeUpdate();
+            return rowsUpdated > 0;
         }
     }
 
